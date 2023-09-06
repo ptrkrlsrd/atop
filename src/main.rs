@@ -48,7 +48,9 @@ fn main() {
         process_vec.sort_by(|a, b| {
             let avg_cpu_usage_a = a.1.cpu_usage_sum / a.1.count as f32;
             let avg_cpu_usage_b = b.1.cpu_usage_sum / b.1.count as f32;
-            avg_cpu_usage_b.partial_cmp(&avg_cpu_usage_a).unwrap()
+            avg_cpu_usage_b
+                .partial_cmp(&avg_cpu_usage_a)
+                .unwrap_or(std::cmp::Ordering::Equal)
         });
 
         for (pid, info) in &process_vec {
