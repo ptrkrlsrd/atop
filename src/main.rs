@@ -43,6 +43,30 @@ fn sort_by_cpu_usage(process_vec: &mut Vec<(&String, &ProcessInfo)>) {
     });
 }
 
+fn print_process_info(process_vec: &[(&String, &ProcessInfo)]) {
+    println!(
+        "{:<45} | {:<11} | {:<10} | {:<10} | {:<20}",
+        "PID", "Avg CPU", "CPU", "Avg RAM", "RAM"
+    );
+    for (pid, info) in process_vec {
+        let cpu = info.cpu_usage;
+        let memory_usage = info.memory_usage / 1024;
+        let avg_cpu_usage = info.cpu_usage_sum / info.count as f32;
+        let avg_memory_usage = memory_usage / info.count;
+        if avg_cpu_usage < THRESHOLD {
+            continue;
+        }
+        println!(
+            "{:<45} | {:<10.2}% | {:<10.2} | {:<11}| {:<20}",
+            pid,
+            avg_cpu_usage,
+            cpu,
+            format!("{}M", avg_memory_usage),
+            format!("{}M", memory_usage)
+        );
+    }
+}
+
 fn main() {
     let delay = Duration::from_millis(1000);
     let mut sys = System::new_all();
@@ -50,37 +74,14 @@ fn main() {
 
     loop {
         print!("\x1B[2J\x1B[1;1H");
+        sys.refresh_all();
 
         update_process_info(&sys, &mut process_info_map);
 
         let mut process_vec: Vec<(&String, &ProcessInfo)> = process_info_map.iter().collect();
         sort_by_cpu_usage(&mut process_vec);
 
-        sys.refresh_all();
-
-        println!(
-            "{:<45} | {:<11} | {:<10} | {:<10} | {:<20}",
-            "PID", "Avg CPU", "CPU", "Avg RAM", "RAM"
-        );
-
-        for (pid, info) in &process_vec {
-            let cpu = info.cpu_usage;
-            let memory_usage = info.memory_usage / 1024;
-            let avg_cpu_usage = info.cpu_usage_sum / info.count as f32;
-            let avg_memory_usage = memory_usage / info.count;
-            if avg_cpu_usage < THRESHOLD {
-                continue;
-            }
-
-            println!(
-                "{:<45} | {:<10.2}% | {:<10.2} | {:<11}| {:<20}",
-                pid,
-                avg_cpu_usage,
-                cpu,
-                format!("{}M", avg_memory_usage),
-                format!("{}M", memory_usage)
-            );
-        }
+        print_process_info(&process_vec);
 
         thread::sleep(delay);
     }
