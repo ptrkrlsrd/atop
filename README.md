@@ -1,2 +1,2 @@
-# Avg_Resources
+# ATop
 ## Simple Top alternative written in Rust
