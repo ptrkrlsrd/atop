@@ -20,6 +20,7 @@ This is a simple process monitoring tool written in Rust. It uses the `sysinfo` 
     ```bash
     cargo install atop
     ```
+  Or clone the repo and run `cargo build --release` in the project directory.
 
 ## License
 MIT
