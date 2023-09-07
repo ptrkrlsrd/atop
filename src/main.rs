@@ -1,6 +1,6 @@
+use std::collections::HashMap;
 use std::thread;
 use std::time::Duration;
-use std::{collections::HashMap, env};
 use sysinfo::{ProcessExt, System, SystemExt};
 
 #[derive(Debug)]
@@ -69,11 +69,6 @@ fn main() {
     let delay = Duration::from_millis(1000);
     let mut sys = System::new_all();
     let mut process_info_map: HashMap<String, ProcessInfo> = HashMap::new();
-
-    let args: Vec<String> = env::args().collect();
-    if args.contains(&String::from("-h")) {
-        println!("Help flag is present!");
-    }
 
     let threshold = 0.1;
 
