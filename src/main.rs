@@ -1,7 +1,14 @@
 use std::collections::HashMap;
 use std::thread;
 use std::time::Duration;
+use structopt::StructOpt;
 use sysinfo::{ProcessExt, System, SystemExt};
+
+#[derive(StructOpt, Debug)]
+struct Cli {
+    #[structopt(short, long, about = "Minimum threshold of CPU usage in %")]
+    threshold: Option<f32>,
+}
 
 #[derive(Debug)]
 struct ProcessInfo {
@@ -70,7 +77,13 @@ fn main() {
     let mut sys = System::new_all();
     let mut process_info_map: HashMap<String, ProcessInfo> = HashMap::new();
 
-    let threshold = 0.1;
+    let args = Cli::from_args();
+
+    let threshold = args.threshold.unwrap_or(0.1);
+
+    if threshold < 0.0 || threshold > 100.0 {
+        panic!("Threshold should be between 0 and 100");
+    }
 
     loop {
         print!("\x1B[2J\x1B[1;1H");
