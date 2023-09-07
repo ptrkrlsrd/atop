@@ -23,5 +23,22 @@ jobs:
     - name: Run tests
       run: cargo test --verbose
 
+    - name: Set Version in Cargo.toml
+      run: |
+        LATEST_TAG=$(git describe --tags --abbrev=0)
+
+        if [[ $LATEST_TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          VERSION=${LATEST_TAG#v}  # Remove 'v' prefix
+          sed -i "s/version = \".*\"/version = \"$VERSION\"/" Cargo.toml
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add Cargo.toml
+          git commit -m "Set version to $VERSION"
+          git push origin
+        else
+          echo "Invalid SemVer tag."
+          exit 1
+        fi
+
     - name: Publish
       run: cargo publish --verbose --token ${{ secrets.CARGO_KEY }}
