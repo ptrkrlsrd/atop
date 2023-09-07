@@ -1,6 +1,6 @@
 [package]
 name = "atop"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2021"
 authors = ["Petter K <ermines-bookie-0l@icloud.com>"]
 description = "Top alternative that shows average CPU usage"
