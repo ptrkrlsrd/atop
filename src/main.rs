@@ -1,9 +1,7 @@
-use std::collections::HashMap;
 use std::thread;
 use std::time::Duration;
+use std::{collections::HashMap, env};
 use sysinfo::{ProcessExt, System, SystemExt};
-
-const THRESHOLD: f32 = 0.1;
 
 #[derive(Debug)]
 struct ProcessInfo {
@@ -43,7 +41,7 @@ fn sort_by_cpu_usage(process_vec: &mut Vec<(&String, &ProcessInfo)>) {
     });
 }
 
-fn print_process_info(process_vec: &[(&String, &ProcessInfo)]) {
+fn print_process_info(process_vec: &[(&String, &ProcessInfo)], threshold: f32) {
     println!(
         "{:<45} | {:<11} | {:<10} | {:<10} | {:<20}",
         "PID", "Avg CPU", "CPU", "Avg RAM", "RAM"
@@ -53,7 +51,7 @@ fn print_process_info(process_vec: &[(&String, &ProcessInfo)]) {
         let memory_usage = info.memory_usage / 1024;
         let avg_cpu_usage = info.cpu_usage_sum / info.count as f32;
         let avg_memory_usage = memory_usage / info.count;
-        if avg_cpu_usage < THRESHOLD {
+        if avg_cpu_usage < threshold {
             continue;
         }
         println!(
@@ -72,6 +70,13 @@ fn main() {
     let mut sys = System::new_all();
     let mut process_info_map: HashMap<String, ProcessInfo> = HashMap::new();
 
+    let args: Vec<String> = env::args().collect();
+    if args.contains(&String::from("-h")) {
+        println!("Help flag is present!");
+    }
+
+    let threshold = 0.1;
+
     loop {
         print!("\x1B[2J\x1B[1;1H");
         sys.refresh_all();
@@ -81,7 +86,7 @@ fn main() {
         let mut process_vec: Vec<(&String, &ProcessInfo)> = process_info_map.iter().collect();
         sort_by_cpu_usage(&mut process_vec);
 
-        print_process_info(&process_vec);
+        print_process_info(&process_vec, threshold);
 
         thread::sleep(delay);
     }
