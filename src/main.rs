@@ -10,13 +10,19 @@ struct Cli {
     threshold: Option<f32>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct ProcessInfo {
     cpu_usage_sum: f32,
     cpu_usage: f32,
     memory_usage_sum: u64,
     memory_usage: u64,
     count: u64,
+}
+
+#[derive(Debug, Clone)]
+struct Process {
+    pid: String,
+    info: ProcessInfo,
 }
 
 fn update_process_info(sys: &System, process_info_map: &mut HashMap<String, ProcessInfo>) {
@@ -38,32 +44,32 @@ fn update_process_info(sys: &System, process_info_map: &mut HashMap<String, Proc
     }
 }
 
-fn sort_by_cpu_usage(process_vec: &mut Vec<(&String, &ProcessInfo)>) {
+fn sort_by_cpu_usage(process_vec: &mut Vec<Process>) {
     process_vec.sort_by(|a, b| {
-        let avg_cpu_usage_a = a.1.cpu_usage_sum / a.1.count as f32;
-        let avg_cpu_usage_b = b.1.cpu_usage_sum / b.1.count as f32;
+        let avg_cpu_usage_a = a.info.cpu_usage_sum / a.info.count as f32;
+        let avg_cpu_usage_b = b.info.cpu_usage_sum / b.info.count as f32;
         avg_cpu_usage_b
             .partial_cmp(&avg_cpu_usage_a)
             .unwrap_or(std::cmp::Ordering::Equal)
     });
 }
 
-fn print_process_info(process_vec: &[(&String, &ProcessInfo)], threshold: f32) {
+fn print_process_info(process_vec: &[Process], threshold: f32) {
     println!(
         "{:<45} | {:<11} | {:<10} | {:<10} | {:<20}",
         "PID", "Avg CPU", "CPU", "Avg RAM", "RAM"
     );
-    for (pid, info) in process_vec {
-        let cpu = info.cpu_usage;
-        let memory_usage = info.memory_usage / 1024;
-        let avg_cpu_usage = info.cpu_usage_sum / info.count as f32;
-        let avg_memory_usage = memory_usage / info.count;
+    for process in process_vec {
+        let cpu = process.info.cpu_usage;
+        let memory_usage = process.info.memory_usage / 1024;
+        let avg_cpu_usage = process.info.cpu_usage_sum / process.info.count as f32;
+        let avg_memory_usage = memory_usage / process.info.count;
         if avg_cpu_usage < threshold {
             continue;
         }
         println!(
             "{:<45} | {:<10.2}% | {:<10.2} | {:<11}| {:<20}",
-            pid,
+            process.pid,
             avg_cpu_usage,
             cpu,
             format!("{}M", avg_memory_usage),
@@ -91,7 +97,13 @@ fn main() {
 
         update_process_info(&sys, &mut process_info_map);
 
-        let mut process_vec: Vec<(&String, &ProcessInfo)> = process_info_map.iter().collect();
+        let mut process_vec: Vec<Process> = process_info_map
+            .iter()
+            .map(|i| Process {
+                pid: i.0.clone(),
+                info: i.1.clone(),
+            })
+            .collect();
         sort_by_cpu_usage(&mut process_vec);
 
         print_process_info(&process_vec, threshold);
